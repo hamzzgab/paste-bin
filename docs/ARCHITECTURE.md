@@ -17,6 +17,7 @@ sequenceDiagram
     participant API
     participant Redis
     participant PostgreSQL
+    participant Cleanup as Cleanup Task (background)
 
     Client->>API: POST /pastes/ {input, language, ttl}
     API->>PostgreSQL: Insert paste, get auto-increment ID
@@ -40,6 +41,10 @@ sequenceDiagram
             API-->>Client: 200 Paste
         end
     end
+
+    loop Every 60s
+        Cleanup->>PostgreSQL: DELETE WHERE expiration_time < now
+    end
 ```
 
 ## Short Code Generation
@@ -51,3 +56,4 @@ The DB auto-increment ID is Base62-encoded to produce a short, URL-safe code (e.
 - **Remaining TTL on cache miss** — Redis is set with `expiration_time - now`, not the original `ttl`, so cache never outlives the paste.
 - **Write-through on create** — cache is primed immediately after POST to avoid a cold-read on the first GET.
 - **410 before caching** — expired pastes are never written to Redis.
+- **Background cleanup** — an asyncio task runs every 60s on app startup and hard-deletes expired rows from PostgreSQL. Redis expiry handles cache eviction; this handles DB hygiene.
