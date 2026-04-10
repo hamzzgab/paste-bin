@@ -40,6 +40,8 @@ def get_paste(code: str, session: SessionDep = None):
         return json.loads(cache)
 
     paste = session.exec(select(Pastes).where(col(Pastes.code) == code)).first()
+    if not paste:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='not found')
     data = Pastes.model_validate(paste).model_dump(mode="json")
     remaining_ttl = int((paste.expiration_time - datetime.now(tz=timezone.utc)).total_seconds())
     if remaining_ttl < 0:
