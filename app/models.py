@@ -7,6 +7,7 @@ from sqlmodel import SQLModel, Field
 class PastesCreate(SQLModel):
     input: str
     language: str
+    ttl: int
 
 
 class Pastes(SQLModel, table=True):

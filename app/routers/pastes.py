@@ -39,10 +39,10 @@ def get_paste(code: str, session: SessionDep = None):
         print(f"Cache Hit!")
         return json.loads(cache)
 
-    paste = session.exec(select(Pastes).where(col(Pastes.code) == code)).one()
+    paste = session.exec(select(Pastes).where(col(Pastes.code) == code)).first()
     data = Pastes.model_validate(paste).model_dump(mode="json")
-    remaining_ttl = (paste.expiration_time - datetime.now(tz=timezone.utc)).seconds
-    if not paste or remaining_ttl < 0:
+    remaining_ttl = int((paste.expiration_time - datetime.now(tz=timezone.utc)).total_seconds())
+    if remaining_ttl < 0:
         raise HTTPException(status_code=status.HTTP_410_GONE, detail='text gone')
     r.set(code, json.dumps(data), ex=remaining_ttl)
     return paste
