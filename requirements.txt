@@ -1,0 +1,6 @@
+redis
+sqlalchemy
+pydantic-settings
+pydantic
+sqlmodel
+fastapi~=0.135.3
