@@ -41,10 +41,8 @@ def get_paste(code: str, session: SessionDep = None):
 
     paste = session.exec(select(Pastes).where(col(Pastes.code) == code)).one()
     data = Pastes.model_validate(paste).model_dump(mode="json")
-
     remaining_ttl = (paste.expiration_time - datetime.now(tz=timezone.utc)).seconds
-    r.set(code, json.dumps(data), ex=remaining_ttl)
-
-    if not paste:
+    if not paste or remaining_ttl < 0:
         raise HTTPException(status_code=status.HTTP_410_GONE, detail='text gone')
+    r.set(code, json.dumps(data), ex=remaining_ttl)
     return paste
