@@ -48,10 +48,3 @@ def get_paste(code: str, session: SessionDep = None):
     if not paste:
         raise HTTPException(status_code=status.HTTP_410_GONE, detail='text gone')
     return paste
-
-
-async def pastes_cleanup(session: SessionDep = None):
-    current_time = datetime.now(tz=timezone.utc)
-    query = select(Pastes).where(col(Pastes.expiration_time) < current_time)
-    session.delete(query)
-    session.commit()
